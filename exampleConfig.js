@@ -3,7 +3,8 @@
 Required Variables:
 
   port:             StatsD listening port [default: 8125]
-
+  graphService:     The graph-service to use [graphite | librato-metrics]
+  
 Graphite Required Variables:
 
 (Leave these unset to avoid sending stats to Graphite.
@@ -24,7 +25,18 @@ Optional Variables:
 
 */
 {
-  graphitePort: 2003
-, graphiteHost: "graphite.host.com"
-, port: 8125
+  graphService: "graphite" // also available: "librato-metrics"
+  , graphitePort: 2003
+  , graphiteHost: "graphite.host.com"
+//, libratoUser: "<librato email>"
+//, libratoApiKey: "<librato api key>"
+//, libratoSource: "loadbalancer-statsd" // optional source
+//, debug: 1
+//, debugInterval: 10000
+//, dumpMessages: 1
+//, mgmt_port: 8126
+//, flushInterval: 10000
+//, percentThreshold: 90
+  , batch: 200
+  , port: 8125
 }

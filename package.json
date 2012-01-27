@@ -1,0 +1,19 @@
+{
+  "name": "statsd",
+  "description": "A nifty little demon to collect metrics",
+  "author": "Etsy",
+  "contributors": [
+    {
+      "name": "Librato",
+      "email": "foo@librato.com",
+      "url": "http://librato.com"
+    }
+  ],
+  "version": "1.1.7",
+  "dependencies": {
+    "async": "0.1.5",
+    "node-syslog": "1.1.1",
+    "underscore": "1.2.4"
+  },
+  "engine": "node 0.6.1"
+}
