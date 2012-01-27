@@ -1,5 +1,5 @@
 require 'socket'
-
+require 'openssl'
 # = Statsd: A Statsd client (https://github.com/etsy/statsd)
 #
 # @example Set up a global Statsd client for a server on localhost:9125
@@ -14,7 +14,7 @@ require 'socket'
 #   statsd.increment 'activate'
 class Statsd
   # A namespace to prepend to all statsd calls.
-  attr_accessor :namespace
+  attr_accessor :namespace, :signing_secret
 
   #characters that will be replaced with _ in stat names
   RESERVED_CHARS_REGEX = /[\:\|\@]/
@@ -86,7 +86,14 @@ class Statsd
   def send(stat, delta, type, sample_rate)
     prefix = "#{@namespace}." unless @namespace.nil?
     stat = stat.to_s.gsub('::', '.').gsub(RESERVED_CHARS_REGEX, '_')
-    sampled(sample_rate) { send_to_socket("#{prefix}#{stat}:#{delta}|#{type}#{'|@' << sample_rate.to_s if sample_rate < 1}") }
+    message = "#{prefix}#{stat}:#{delta}|#{type}#{'|@' << sample_rate.to_s if sample_rate < 1}"
+    if signing_secret
+      nonce = (Time.now.gmtime.to_f * 1000).round
+      message << "|#{nonce}"
+      signature = OpenSSL::HMAC.hexdigest("md5", signing_secret, message)
+      message << "|#{signature}"
+    end
+    sampled(sample_rate) { send_to_socket(message) }
   end
 
   def send_to_socket(message)
