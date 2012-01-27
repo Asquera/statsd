@@ -7,6 +7,7 @@ var dgram      = require('dgram')
   , underscore = require('underscore')
   , async      = require('async')
   , https      = require('https')
+  , crypto     = require('crypto')
   , syslog     = require('node-syslog');
 
 syslog.init("node-syslog", syslog.LOG_PID | syslog.LOG_ODELAY, syslog.LOG_LOCAL0);
@@ -24,6 +25,7 @@ var globalstats = {
   messages: {
     last_msg_seen: startup_time,
     bad_lines_seen: 0,
+	bad_signature_seen: 0
   }
 };
 
@@ -74,7 +76,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       if (bits.length == 0) {
         return;
       }
-
+	  // split the received message in fields and handle it
       for (var i = 0; i < bits.length; i++) {
         var sampleRate = 1;
         var fields = bits[i].split("|");
@@ -83,6 +85,24 @@ config.configFile(process.argv[2], function (config, oldConfig) {
             globalstats['messages']['bad_lines_seen']++;
             continue;
         }
+		
+		// signed messages have the format 
+		// stat:delta|type[|@sample_rate][|nonce|signature]
+		if (config.signMessages) {
+			var signature = fields.pop();
+			var nonce = fields.pop();
+			var signstring = msgStr.replace("|" + signature, "")
+			
+			if (nonce === undefined || signature === undefined || (signature != crypto.createHmac("md5", config.tokenSecret).update(signstring, "utf8").digest("hex"))) {
+            	if (config.logSignatureErrors) {
+					syslog.log(syslog.LOG_ERR, 'Bad signature: ' + signature + ' for fields ' + fields + ". Dropping message.");
+				}
+            	globalstats['messages']['bad_signature_seen']++;
+            	continue;
+			}
+		}
+		
+		
         if (fields[1].trim() == "ms") {
           if (! timers[key]) {
             timers[key] = [];
