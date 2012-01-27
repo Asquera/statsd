@@ -124,15 +124,15 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
             stream.write("uptime: " + uptime + "\n");
 
-            for (group in stats) {
-              for (metric in stats[group]) {
+            for (group in globalstats) {
+              for (metric in globalstats[group]) {
                 var val;
 
                 if (metric.match("^last_")) {
-                  val = now - stats[group][metric];
+                  val = now - globalstats[group][metric];
                 }
                 else {
-                  val = stats[group][metric];
+                  val = globalstats[group][metric];
                 }
 
                 stream.write(group + "." + metric + ": " + val + "\n");
